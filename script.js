@@ -51,9 +51,11 @@ $("carrossel").addEventListener("touchend", (e) => {
   const dx = e.changedTouches[0].clientX - toqueX;
   if (Math.abs(dx) > 40) irPara(atual + (dx < 0 ? 1 : -1));
 });
-let auto = setInterval(() => irPara(atual + 1), 5000);
+// a troca automática das fotos só começa depois da animação de abertura
+let auto = null;
+function iniciarCarrossel() { auto = setInterval(() => irPara(atual + 1), 5000); }
 // quando alguém troca a foto na mão, reinicia a contagem da troca automática
-function reiniciarAuto() { clearInterval(auto); auto = setInterval(() => irPara(atual + 1), 5000); }
+function reiniciarAuto() { if (!auto) return; clearInterval(auto); iniciarCarrossel(); }
 $("carrossel").addEventListener("click", reiniciarAuto);
 $("carrossel").addEventListener("touchend", reiniciarAuto);
 irPara(0);
@@ -72,7 +74,7 @@ $("play").onclick = () => {
   if (audio.paused) tocar();
   else { audio.pause(); $("play").textContent = "▶"; $("disco").classList.remove("girando"); }
 };
-audio.ontimeupdate = () => { if (audio.duration) $("progresso").style.width = (audio.currentTime / audio.duration) * 100 + "%"; };
+audio.ontimeupdate = () => { if (audio.duration && !audio.muted) $("progresso").style.width = (audio.currentTime / audio.duration) * 100 + "%"; };
 
 // Contador de tempo juntos
 const inicio = new Date(C.dataInicio);
@@ -137,21 +139,45 @@ let aberto = false;
 function revelarSite() {
   $("abertura").hidden = true;
   document.body.classList.remove("fechado");
-  document.querySelectorAll(".cartao").forEach((el) => obs.observe(el));
+  // os cartões que já estão na tela aparecem prontos (sem animar) enquanto as flores se fecham;
+  // os de baixo continuam surgindo quando ela rolar
+  document.body.classList.add("sem-transicao");
+  document.querySelectorAll(".cartao").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.top < innerHeight && r.bottom > 0) el.classList.add("visivel");
+    else obs.observe(el);
+  });
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove("sem-transicao")));
+}
+
+// tudo que se mexe no site começa só quando a animação das margaridas termina
+function iniciarSite() {
+  iniciarCarrossel();
+  setInterval(criarCoracao, 600);
+  if (C.musica && C.musica.arquivo) {
+    // a música já foi liberada (sem som) no toque; agora começa do início, com som
+    audio.currentTime = 0;
+    audio.muted = false;
+    if (audio.paused) tocar();
+    else { $("play").textContent = "❚❚"; $("disco").classList.add("girando"); }
+  }
 }
 
 $("btn-coracao").onclick = () => {
   if (aberto) return;
   aberto = true;
-  if (C.musica && C.musica.arquivo) tocar();
+  // o celular só deixa tocar som a partir de um toque, então a música começa aqui, sem som,
+  // e o som é ligado quando a animação termina
+  if (C.musica && C.musica.arquivo) { audio.muted = true; audio.play().catch(() => {}); }
   const btn = $("btn-coracao").getBoundingClientRect();
   $("abertura").classList.add("abrindo");
   const semMovimento = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (semMovimento) {
     revelarSite();
+    iniciarSite();
     return;
   }
-  buqueDeMargaridas(btn, revelarSite, () => setInterval(criarCoracao, 600));
+  buqueDeMargaridas(btn, revelarSite, iniciarSite);
 };
 
 // ===== Animação: a margarida se abre num buquê que cobre a tela =====

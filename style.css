@@ -141,3 +141,6 @@ button:focus:not(:focus-visible) { outline: none; }
 #buque-abertura { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; visibility: hidden; }
 #buque-abertura canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 #buque-abertura.ativo { visibility: visible; }
+
+/* usado por um instante ao revelar o site, para os cartões aparecerem já prontos */
+body.sem-transicao .cartao { transition: none !important; }

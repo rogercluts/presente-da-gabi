@@ -21,7 +21,7 @@ const CONFIG = {
   fotos: [
     { arquivo: "fotos/foto1.jpg", legenda: "Nosso primeiro encontro" },
     { arquivo: "fotos/foto2.jpg", legenda: "Aquele dia perfeito" },
-    { arquivo: "fotos/foto3.jpg", legenda: "Você sorrindo assim 💙" },
+    { arquivo: "fotos/nos-dois-selfie.jpg", legenda: "Você sorrindo assim 💙" },
     { arquivo: "fotos/foto4.jpg", legenda: "Nós dois" },
   ],
 
